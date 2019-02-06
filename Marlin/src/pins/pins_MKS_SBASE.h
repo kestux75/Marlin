@@ -78,9 +78,9 @@
 #define E0_DIR_PIN         P0_22
 #define E0_ENABLE_PIN      P0_21
 
-#define E1_STEP_PIN        P2_08
-#define E1_DIR_PIN         P2_13
-#define E1_ENABLE_PIN      P4_29
+//#define E1_STEP_PIN        P2_08
+//#define E1_DIR_PIN         P2_13
+//#define E1_ENABLE_PIN      P4_29
 
 //
 // Temperature Sensors
@@ -170,8 +170,8 @@
  */
 
 //#define LPC_SD_CUSTOM_CABLE // Use a custom cable to access the SD
-//#define LPC_SD_LCD          // Marlin uses the SD drive attached to the LCD
-#define LPC_SD_ONBOARD        // Marlin uses the SD drive attached to the control board
+#define LPC_SD_LCD          // Marlin uses the SD drive attached to the LCD
+//#define LPC_SD_ONBOARD        // Marlin uses the SD drive attached to the control board
 
 #if ENABLED(LPC_SD_CUSTOM_CABLE)
 
@@ -262,8 +262,8 @@
   // J8
   #define X_CS_PIN         P1_22
   #define Y_CS_PIN         P1_23
-  #define Z_CS_PIN         P2_12
-  #define E0_CS_PIN        P2_11
+  #define Z_CS_PIN         P0_03
+  #define E0_CS_PIN        P0_02
   #define E1_CS_PIN        P4_28
 
 // Hardware SPI is on EXP2. See if you can make it work:
@@ -271,13 +271,13 @@
 #define TMC_USE_SW_SPI
 #if ENABLED(TMC_USE_SW_SPI)
   #ifndef TMC_SW_MOSI
-    #define TMC_SW_MOSI    P0_03   // AUX1
+    #define TMC_SW_MOSI    P2_08   // E1
   #endif
   #ifndef TMC_SW_MISO
-    #define TMC_SW_MISO    P0_02   // AUX1
+    #define TMC_SW_MISO    P2_13   // E1
   #endif
   #ifndef TMC_SW_SCK
-    #define TMC_SW_SCK     P0_26   // TH4
+    #define TMC_SW_SCK     P4_29   // E1
   #endif
  #endif
 #endif
