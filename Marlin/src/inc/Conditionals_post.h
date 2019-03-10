@@ -43,6 +43,16 @@
   #define NOT_A_PIN 0 // For PINS_DEBUGGING
 #endif
 
+#if EXTRUDERS == 0
+  #define NO_VOLUMETRICS
+  #undef FWRETRACT
+  #undef LIN_ADVANCE
+  #undef ADVANCED_PAUSE_FEATURE
+  #undef DISABLE_INACTIVE_EXTRUDER
+  #undef EXTRUDER_RUNOUT_PREVENT
+  #undef FILAMENT_LOAD_UNLOAD_GCODES
+#endif
+
 #define HAS_CLASSIC_JERK (IS_KINEMATIC || DISABLED(JUNCTION_DEVIATION))
 
 /**
@@ -203,11 +213,17 @@
  * Safe Homing Options
  */
 #if ENABLED(Z_SAFE_HOMING)
+  #if ENABLED(AUTO_BED_LEVELING_UBL)
+    // Home close to center so grid points have z heights very close to 0
+    #define _SAFE_POINT(A) (((GRID_MAX_POINTS_##A) / 2) * (A##_BED_SIZE - 2 * (MESH_INSET)) / (GRID_MAX_POINTS_##A - 1) + MESH_INSET)
+  #else
+    #define _SAFE_POINT(A) A##_CENTER
+  #endif
   #ifndef Z_SAFE_HOMING_X_POINT
-    #define Z_SAFE_HOMING_X_POINT X_CENTER
+    #define Z_SAFE_HOMING_X_POINT _SAFE_POINT(X)
   #endif
   #ifndef Z_SAFE_HOMING_Y_POINT
-    #define Z_SAFE_HOMING_Y_POINT Y_CENTER
+    #define Z_SAFE_HOMING_Y_POINT _SAFE_POINT(Y)
   #endif
   #define X_TILT_FULCRUM Z_SAFE_HOMING_X_POINT
   #define Y_TILT_FULCRUM Z_SAFE_HOMING_Y_POINT
@@ -719,12 +735,12 @@
 // Is an endstop plug used for the Z2 endstop or the bed probe?
 #define IS_Z2_OR_PROBE(A,M) ( \
      (Z_MULTI_ENDSTOPS && Z2_USE_ENDSTOP == _##A##M##_) \
-  || (ENABLED(Z_MIN_PROBE_ENDSTOP) && Z_MIN_PROBE_PIN == A##_##M##_PIN ) )
+  || (USES_Z_MIN_PROBE_ENDSTOP && Z_MIN_PROBE_PIN == A##_##M##_PIN ) )
 
 // Is an endstop plug used for the Z3 endstop or the bed probe?
 #define IS_Z3_OR_PROBE(A,M) ( \
      (ENABLED(Z_TRIPLE_ENDSTOPS) && Z3_USE_ENDSTOP == _##A##M##_) \
-  || (ENABLED(Z_MIN_PROBE_ENDSTOP) && Z_MIN_PROBE_PIN == A##_##M##_PIN ) )
+  || (USES_Z_MIN_PROBE_ENDSTOP && Z_MIN_PROBE_PIN == A##_##M##_PIN ) )
 
 /**
  * Set ENDSTOPPULLUPS for active endstop switches
@@ -888,7 +904,7 @@
 #define HAS_Z2_MAX (PIN_EXISTS(Z2_MAX))
 #define HAS_Z3_MIN (PIN_EXISTS(Z3_MIN))
 #define HAS_Z3_MAX (PIN_EXISTS(Z3_MAX))
-#define HAS_Z_MIN_PROBE_PIN (PIN_EXISTS(Z_MIN_PROBE))
+#define HAS_Z_MIN_PROBE_PIN (USES_Z_MIN_PROBE_ENDSTOP && PIN_EXISTS(Z_MIN_PROBE))
 #define HAS_CALIBRATION_PIN (PIN_EXISTS(CALIBRATION))
 
 // ADC Temp Sensors (Thermistor or Thermocouple with amplifier ADC interface)
@@ -898,12 +914,14 @@
 #define HAS_TEMP_ADC_2 HAS_ADC_TEST(2)
 #define HAS_TEMP_ADC_3 HAS_ADC_TEST(3)
 #define HAS_TEMP_ADC_4 HAS_ADC_TEST(4)
+#define HAS_TEMP_ADC_5 HAS_ADC_TEST(5)
 #define HAS_TEMP_ADC_BED HAS_ADC_TEST(BED)
 #define HAS_TEMP_ADC_CHAMBER HAS_ADC_TEST(CHAMBER)
 
 #define HAS_TEMP_HOTEND (HAS_TEMP_ADC_0 || ENABLED(HEATER_0_USES_MAX6675))
 #define HAS_TEMP_BED HAS_TEMP_ADC_BED
 #define HAS_TEMP_CHAMBER HAS_TEMP_ADC_CHAMBER
+#define HAS_HEATED_CHAMBER (HAS_TEMP_CHAMBER && PIN_EXISTS(CHAMBER_HEATER))
 
 // Heaters
 #define HAS_HEATER_0 (PIN_EXISTS(HEATER_0))
@@ -911,6 +929,7 @@
 #define HAS_HEATER_2 (PIN_EXISTS(HEATER_2))
 #define HAS_HEATER_3 (PIN_EXISTS(HEATER_3))
 #define HAS_HEATER_4 (PIN_EXISTS(HEATER_4))
+#define HAS_HEATER_5 (PIN_EXISTS(HEATER_5))
 #define HAS_HEATER_BED (PIN_EXISTS(HEATER_BED))
 
 // Shorthand for common combinations
@@ -927,7 +946,8 @@
 // Thermal protection
 #define HAS_THERMALLY_PROTECTED_BED (HAS_HEATED_BED && ENABLED(THERMAL_PROTECTION_BED))
 #define WATCH_HOTENDS (ENABLED(THERMAL_PROTECTION_HOTENDS) && WATCH_TEMP_PERIOD > 0)
-#define WATCH_THE_BED (HAS_THERMALLY_PROTECTED_BED && WATCH_BED_TEMP_PERIOD > 0)
+#define WATCH_BED (HAS_THERMALLY_PROTECTED_BED && WATCH_BED_TEMP_PERIOD > 0)
+#define WATCH_CHAMBER (HAS_HEATED_CHAMBER && ENABLED(THERMAL_PROTECTION_CHAMBER) && WATCH_CHAMBER_TEMP_PERIOD > 0)
 
 // Auto fans
 #define HAS_AUTO_FAN_0 (PIN_EXISTS(E0_AUTO_FAN))
@@ -1090,6 +1110,10 @@
   #define HEATER_4_INVERTING false
 #endif
 
+#if HAS_HEATER_5 && !defined(HEATER_5_INVERTING)
+  #define HEATER_5_INVERTING false
+#endif
+
 /**
  * Helper Macros for heaters and extruder fan
  */
@@ -1127,6 +1151,19 @@
     #define HEATER_BED_INVERTING false
   #endif
   #define WRITE_HEATER_BED(v) WRITE(HEATER_BED_PIN, (v) ^ HEATER_BED_INVERTING)
+#endif
+
+/**
+ * Heated chamber requires settings
+ */
+#if HAS_HEATED_CHAMBER
+  #ifndef MAX_CHAMBER_POWER
+    #define MAX_CHAMBER_POWER 255
+  #endif
+  #ifndef HEATER_CHAMBER_INVERTING
+    #define HEATER_CHAMBER_INVERTING false
+  #endif
+  #define WRITE_HEATER_CHAMBER(v) WRITE(HEATER_CHAMBER_PIN, (v) ^ HEATER_CHAMBER_INVERTING)
 #endif
 
 /**
@@ -1174,6 +1211,13 @@
   #error "FAN_MAX_PWM must be a value from 0 to 255."
 #elif FAN_MIN_PWM > FAN_MAX_PWM
   #error "FAN_MIN_PWM must be less than or equal to FAN_MAX_PWM."
+#endif
+
+/**
+ * FAST PWM FAN Settings
+ */
+#if ENABLED(FAST_PWM_FAN) && !defined(FAST_PWM_FAN_FREQUENCY)
+  #define FAST_PWM_FAN_FREQUENCY ((F_CPU) / (2 * 255 * 1)) // Fan frequency default
 #endif
 
 /**
