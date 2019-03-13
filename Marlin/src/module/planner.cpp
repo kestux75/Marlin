@@ -1290,13 +1290,13 @@ void Planner::check_axes_activity() {
     #else
 
       #if HAS_FAN0
-        analogWrite(FAN_PIN, CALC_FAN_SPEED(0));
+        ANALOG_WRITE(FAN_PIN, CALC_FAN_SPEED(0));
       #endif
       #if HAS_FAN1
-        analogWrite(FAN1_PIN, CALC_FAN_SPEED(1));
+        ANALOG_WRITE(FAN1_PIN, CALC_FAN_SPEED(1));
       #endif
       #if HAS_FAN2
-        analogWrite(FAN2_PIN, CALC_FAN_SPEED(2));
+        ANALOG_WRITE(FAN2_PIN, CALC_FAN_SPEED(2));
       #endif
     #endif
 
@@ -1308,10 +1308,10 @@ void Planner::check_axes_activity() {
 
   #if ENABLED(BARICUDA)
     #if HAS_HEATER_1
-      analogWrite(HEATER_1_PIN, tail_valve_pressure);
+      ANALOG_WRITE(HEATER_1_PIN, tail_valve_pressure);
     #endif
     #if HAS_HEATER_2
-      analogWrite(HEATER_2_PIN, tail_e_to_p_pressure);
+      ANALOG_WRITE(HEATER_2_PIN, tail_e_to_p_pressure);
     #endif
   #endif
 }
@@ -1996,7 +1996,7 @@ bool Planner::_populate_block(block_t * const block, bool split_move,
           #endif // EXTRUDERS > 1
           enable_E0();
           g_uc_extruder_last_move[0] = (BLOCK_BUFFER_SIZE) * 2;
-          #if ENABLED(DUAL_X_CARRIAGE) || ENABLED(DUAL_NOZZLE_DUPLICATION_MODE)
+          #if HAS_DUPLICATION_MODE
             if (extruder_duplication_enabled) {
               enable_E1();
               g_uc_extruder_last_move[1] = (BLOCK_BUFFER_SIZE) * 2;

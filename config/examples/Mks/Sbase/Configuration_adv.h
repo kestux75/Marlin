@@ -479,8 +479,8 @@
 
 #define AXIS_RELATIVE_MODES {false, false, false, false}
 
-// Allow duplication mode with a basic dual-nozzle extruder
-//#define DUAL_NOZZLE_DUPLICATION_MODE
+// Add a Duplicate option for well-separated conjoined nozzles
+//#define MULTI_NOZZLE_DUPLICATION
 
 // By default pololu step drivers require an active high signal. However, some high power drivers require an active low signal as step.
 #define INVERT_X_STEP_PIN false
@@ -917,13 +917,6 @@
 
   // Swap the CW/CCW indicators in the graphics overlay
   //#define OVERLAY_GFX_REVERSE
-
-
-  // VIKI2 and miniVIKI require DOGLCD_SCK and DOGLCD_MOSI to be defined.
-  #if ENABLED(VIKI2) || ENABLED(miniVIKI)
-    #define DOGLCD_SCK SCK_PIN
-    #define DOGLCD_MOSI MOSI_PIN
-  #endif
 
   /**
    * ST7920-based LCDs can emulate a 16 x 4 character display using
@@ -2236,6 +2229,8 @@
 #if ENABLED(WIFISUPPORT)
   #define WIFI_SSID "Wifi SSID"
   #define WIFI_PWD  "Wifi Password"
+  //#define WEBSUPPORT        // Start a webserver with auto-discovery
+  //#define OTASUPPORT        // Support over-the-air firmware updates
 #endif
 
 /**
